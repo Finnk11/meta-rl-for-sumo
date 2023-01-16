@@ -1,0 +1,10 @@
+<viewsettings>
+    <scheme name="real world"/>
+    <viewport zoom="350" x="250" y="250"/>
+    <delay value="42"/>
+    <!--
+    <decal file="background.gif" centerX="550.00" centerY="1530.00" width="64.00" height="64.00" rotation="0.00"/>
+    <breakpoint value="42"/>
+    <breakpoint value="1337"/>
+    -->
+</viewsettings>
