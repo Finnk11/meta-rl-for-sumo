@@ -2,14 +2,12 @@ import os
 import sys
 import tempfile
 import xml.etree.cElementTree as elementTree
-from sumolib import checkBinary
+
 import traci
-from nets.generate import generate_dyn_routefile
+from sumolib import checkBinary
 
-avg_queue_length_lst=[]
-lane_index_lst=[]
-
-fairness_index_lst=[]
+avg_queue_length_lst = []
+fairness_index_lst = []
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -19,13 +17,25 @@ else:
 
 LIBSUMO = 'LIBSUMO_AS_TRACI' in os.environ
 
-# choose a fix peak
-for peak in [0.4]:
-    flow_file = tempfile.NamedTemporaryFile()
-    generate_dyn_routefile(flow_file.name, pns_peak=peak, pwe_peak=peak)
+for p in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]:
+    # static route flows
+    flow_str = """<routes>
+    \t<route id="r_ns" edges="npn_nt1 nt1_nps"/>
+    \t<route id="r_sn" edges="nps_nt1 nt1_npn"/>
+    \t<route id="r_we" edges="npw_nt1 nt1_npe"/>
+    \t<route id="r_ew" edges="npe_nt1 nt1_npw"/>
+    \t<flow id="ns_0" route="r_ns" begin="0" end="3600" probability="{prob}" departPos="free"/>
+    \t<flow id="sn_0" route="r_sn" begin="0" end="3600" probability="{prob}" departPos="free"/>
+    \t<flow id="we_0" route="r_we" begin="0" end="3600" probability="{prob}" departPos="free"/>
+    \t<flow id="ew_0" route="r_ew" begin="0" end="3600" probability="{prob}" departPos="free"/>
+</routes>
+    """.format(prob=p)
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    # write to temp file
+    flow_file = tempfile.NamedTemporaryFile(delete=False)
+    flow_file.write(flow_str)
 
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
     # new sumo-config needed
     config_str = """<configuration>
 \t  <input>
@@ -45,11 +55,11 @@ for peak in [0.4]:
         config.write(config_str)
         config.close()
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
     # routefile = os.path.join(os.getcwd(), 'nets/single_intersection/stat.gen.rou.xml')
     routefile = flow_file
-    #sumocfg = os.path.join(os.getcwd(), 'nets/single_intersection/exp.sumocfg')
-    sumocfg=config_file.name
+    # sumocfg = os.path.join(os.getcwd(), 'nets/single_intersection/exp.sumocfg')
+    sumocfg = config_file.name
 
     use_gui = False
     conn_label = str(0)  # for trace multi-client support
@@ -84,33 +94,34 @@ for peak in [0.4]:
         traci.simulationStep()
 
         # inspect every 5 steps, start at step=100
-        if (step+1) % 5 == 0 and step > 100:
+        if (step + 1) % 5 == 0 and step > 100:
             for i, laneID in enumerate(traci.trafficlight.getControlledLanes('nt1')):
                 vehicles_on_lane = traci.lane.getLastStepVehicleIDs(laneID)
                 # either rGrG, GrGr, yryr, ryry
                 phase = traci.trafficlight.getRedYellowGreenState('nt1')
                 # count vehicles with speed < 0.1 m/s
-                speeds_waiting_vehicles = [traci.vehicle.getSpeed(c) for c in vehicles_on_lane if traci.vehicle.getSpeed(c) <0.1]
+                speeds_waiting_vehicles = [traci.vehicle.getSpeed(c) for c in vehicles_on_lane if
+                                           traci.vehicle.getSpeed(c) < 0.1]
                 # add number of vehicles waiting at red
                 if len(speeds_waiting_vehicles) > 0 and phase[i] == 'r':
                     queue_length_lst.append(len(speeds_waiting_vehicles))
-                    # record the lane
-                    lane_index_lst.append(i)
 
         step += 1
         # print('step:', step)
     # average queue length of vehicles waiting at red
-    avg_queue_len = float(sum(queue_length_lst))/len(queue_length_lst)
+    avg_queue_len = float(sum(queue_length_lst)) / len(queue_length_lst)
     print('average queue length:', avg_queue_len)
     # collect average queue length for different arrival probs
     avg_queue_length_lst.append(avg_queue_len)
 
     traci.close()
 
+
     # Jain's fairness index
     # Equals 1 when all vehicles have the same delay
     def fairness_index(d):
-        return sum(d)**2/(len(d)*sum([i**2 for i in d]))
+        return sum(d) ** 2 / (len(d) * sum([i ** 2 for i in d]))
+
 
     # store information from the trip_info file
     # to a dictionary
@@ -134,32 +145,22 @@ for peak in [0.4]:
             return []
 
 
-    #trip_info_lst = collect_trip_info()
-    #print('trip_info:', len(trip_info_lst))
-    #arrivals = [float(a['arrival_sec']) for a in trip_info_lst]
-    #print('arrivals:', len(arrivals))
-    #arr = [x > 0 for x in arrivals]
-    #print(sum(arr))
+    trip_info_lst = collect_trip_info()
+    print('trip_info:', len(trip_info_lst))
+    arrivals = [float(a['arrival_sec']) for a in trip_info_lst]
+    print('arrivals:', len(arrivals))
+    arr = [x > 0 for x in arrivals]
+    print(sum(arr))
 
-    #delays = [float(a['timeLoss_sec']) for a in trip_info_lst]
-    #fairness_index = fairness_index(delays)
-    #print('Jain\'s fairness index:', fairness_index)
+    delays = [float(a['timeLoss_sec']) for a in trip_info_lst]
+    fairness_index = fairness_index(delays)
+    print('Jain\'s fairness index:', fairness_index)
 
     # collect fairness index for various arrival probs
-    #fairness_index_lst.append(fairness_index)
-    #print('Throughput:', len(arr))
+    fairness_index_lst.append(fairness_index)
+    print('Throughput:', len(arr))
 
-#print("AVG QUEUE LENGTH:", avg_queue_length_lst)
-#print("FAIRNESS INDEX:", fairness_index_lst)
-
-
-import json
-
-laneID_queue_length_dict = {0: [], 1: [], 2: [], 3: []}
-for laneID, queue_length in zip(lane_index_lst, queue_length_lst):
-    laneID_queue_length_dict[laneID].append(queue_length)
-
-
-# To save the dictionary into a file:
-json.dump(laneID_queue_length_dict, open("Json/boxplot_data.json", 'w'))
-
+print("AVG QUEUE LENGTH:", avg_queue_length_lst)
+print("FAIRNESS INDEX:", fairness_index_lst)
+# from here copy probs value list,avg_queue_length_lst, fairness_index_lst
+# and plot with port_static_arrivals.py file

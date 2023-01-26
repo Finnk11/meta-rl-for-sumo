@@ -2,7 +2,7 @@ import json
 import matplotlib.pyplot as plt
 
 # To read data from file:
-boxplot_data = json.load(open("Json/boxplot_data.json"))
+boxplot_data = json.load(open("../data/json/boxplot_data.json"))
 
 print(boxplot_data.keys())
 print(len(boxplot_data['0']))

@@ -22,7 +22,7 @@ for peak in [0.4]:
     flow_file = tempfile.NamedTemporaryFile()
     generate_dyn_routefile(flow_file.name, pns_peak=peak, pwe_peak=peak)
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
 
     # new sumo-config needed
     config_str = """<configuration>
@@ -43,7 +43,7 @@ for peak in [0.4]:
         config.write(config_str)
         config.close()
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
     # routefile = os.path.join(os.getcwd(), 'nets/single_intersection/stat.gen.rou.xml')
     routefile = flow_file
     #sumocfg = os.path.join(os.getcwd(), 'nets/single_intersection/exp.sumocfg')
@@ -139,7 +139,7 @@ for peak in [0.4]:
 
     delays = [float(a['timeLoss_sec']) for a in trip_info_lst]
     import json
-    json.dump(delays, open("Json/delays.json", 'w'))
+    json.dump(delays, open("../data/json/delays.json", 'w'))
 
     fairness_index = fairness_index(delays)
     print('Jain\'s fairness index:', fairness_index)

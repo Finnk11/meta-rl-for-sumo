@@ -7,6 +7,8 @@ import traci
 from nets.generate import generate_dyn_routefile
 
 avg_queue_length_lst=[]
+lane_index_lst=[]
+
 fairness_index_lst=[]
 
 if 'SUMO_HOME' in os.environ:
@@ -17,11 +19,12 @@ else:
 
 LIBSUMO = 'LIBSUMO_AS_TRACI' in os.environ
 
-for peak in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
+# choose a fix peak
+for peak in [0.4]:
     flow_file = tempfile.NamedTemporaryFile()
     generate_dyn_routefile(flow_file.name, pns_peak=peak, pwe_peak=peak)
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
 
     # new sumo-config needed
     config_str = """<configuration>
@@ -42,7 +45,7 @@ for peak in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
         config.write(config_str)
         config.close()
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
     # routefile = os.path.join(os.getcwd(), 'nets/single_intersection/stat.gen.rou.xml')
     routefile = flow_file
     #sumocfg = os.path.join(os.getcwd(), 'nets/single_intersection/exp.sumocfg')
@@ -91,6 +94,8 @@ for peak in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
                 # add number of vehicles waiting at red
                 if len(speeds_waiting_vehicles) > 0 and phase[i] == 'r':
                     queue_length_lst.append(len(speeds_waiting_vehicles))
+                    # record the lane
+                    lane_index_lst.append(i)
 
         step += 1
         # print('step:', step)
@@ -129,22 +134,32 @@ for peak in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
             return []
 
 
-    trip_info_lst = collect_trip_info()
-    print('trip_info:', len(trip_info_lst))
-    arrivals = [float(a['arrival_sec']) for a in trip_info_lst]
-    print('arrivals:', len(arrivals))
-    arr = [x > 0 for x in arrivals]
-    print(sum(arr))
+    #trip_info_lst = collect_trip_info()
+    #print('trip_info:', len(trip_info_lst))
+    #arrivals = [float(a['arrival_sec']) for a in trip_info_lst]
+    #print('arrivals:', len(arrivals))
+    #arr = [x > 0 for x in arrivals]
+    #print(sum(arr))
 
-    delays = [float(a['timeLoss_sec']) for a in trip_info_lst]
-    fairness_index = fairness_index(delays)
-    print('Jain\'s fairness index:', fairness_index)
+    #delays = [float(a['timeLoss_sec']) for a in trip_info_lst]
+    #fairness_index = fairness_index(delays)
+    #print('Jain\'s fairness index:', fairness_index)
 
     # collect fairness index for various arrival probs
-    fairness_index_lst.append(fairness_index)
-    print('Throughput:', len(arr))
+    #fairness_index_lst.append(fairness_index)
+    #print('Throughput:', len(arr))
 
-print("AVG QUEUE LENGTH:", avg_queue_length_lst)
-print("FAIRNESS INDEX:", fairness_index_lst)
-# from here copy probs value list,avg_queue_length_lst, fairness_index_lst
-# and plot with port_static_arrivals.py file
+#print("AVG QUEUE LENGTH:", avg_queue_length_lst)
+#print("FAIRNESS INDEX:", fairness_index_lst)
+
+
+import json
+
+laneID_queue_length_dict = {0: [], 1: [], 2: [], 3: []}
+for laneID, queue_length in zip(lane_index_lst, queue_length_lst):
+    laneID_queue_length_dict[laneID].append(queue_length)
+
+
+# To save the dictionary into a file:
+json.dump(laneID_queue_length_dict, open("../data/json/boxplot_data.json", 'w'))
+

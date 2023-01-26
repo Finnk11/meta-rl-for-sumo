@@ -4,6 +4,7 @@ import tempfile
 import xml.etree.cElementTree as elementTree
 from sumolib import checkBinary
 import traci
+from nets.generate import generate_dyn_routefile
 
 avg_queue_length_lst=[]
 fairness_index_lst=[]
@@ -16,27 +17,12 @@ else:
 
 LIBSUMO = 'LIBSUMO_AS_TRACI' in os.environ
 
-for p in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]:
-    # static route flows
-    flow_str = """<routes>
-    \t<route id="r_ns" edges="npn_nt1 nt1_nps"/>
-    \t<route id="r_sn" edges="nps_nt1 nt1_npn"/>
-    \t<route id="r_we" edges="npw_nt1 nt1_npe"/>
-    \t<route id="r_ew" edges="npe_nt1 nt1_npw"/>
-    \t<flow id="ns_0" route="r_ns" begin="0" end="3600" probability="{prob}" departPos="free"/>
-    \t<flow id="sn_0" route="r_sn" begin="0" end="3600" probability="{prob}" departPos="free"/>
-    \t<flow id="we_0" route="r_we" begin="0" end="3600" probability="{prob}" departPos="free"/>
-    \t<flow id="ew_0" route="r_ew" begin="0" end="3600" probability="{prob}" departPos="free"/>
-</routes>
-    """.format(prob=p)
-
-    # write to temp file
+for peak in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]:
     flow_file = tempfile.NamedTemporaryFile()
-    with open(flow_file.name, 'w') as flow:
-        flow.write(flow_str)
-        flow.close()
+    generate_dyn_routefile(flow_file.name, pns_peak=peak, pwe_peak=peak)
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
+
     # new sumo-config needed
     config_str = """<configuration>
 \t  <input>
@@ -56,7 +42,7 @@ for p in [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]:
         config.write(config_str)
         config.close()
 
-    netfile = os.path.join(os.getcwd(), 'nets/single_intersection/exp.net.xml')
+    netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
     # routefile = os.path.join(os.getcwd(), 'nets/single_intersection/stat.gen.rou.xml')
     routefile = flow_file
     #sumocfg = os.path.join(os.getcwd(), 'nets/single_intersection/exp.sumocfg')

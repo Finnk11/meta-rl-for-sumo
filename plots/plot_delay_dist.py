@@ -1,7 +1,7 @@
 import json
 import matplotlib.pyplot as plt
 # To read data from file:
-delays = json.load(open("Json/delays.json"))
+delays = json.load(open("../data/json/delays.json"))
 
 print(len(delays))
 print(type(delays[0]))
