@@ -68,9 +68,14 @@ class Simulation:
                              }
                 trip_info_list.append(trip_info)
 
+            self._data = trip_info_list
+
             if os.name == 'nt':
                 temp_data_xml_file.close()
                 os.unlink(temp_data_xml_file.name)
 
     def get_data(self):
         return self._data
+
+    def __getitem__(self, item):
+        return self._data.__getitem__(item)
