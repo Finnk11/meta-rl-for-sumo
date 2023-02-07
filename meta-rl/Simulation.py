@@ -6,13 +6,16 @@ import xml.etree.cElementTree as elementTree
 import traci
 from sumolib import checkBinary
 
+import SumoConfiguration
+
 
 class Simulation:
 
-    def __init__(self, record_trip_info=True, use_gui=False):
+    def __init__(self, configuration: SumoConfiguration = None, record_trip_info: bool = True, use_gui: bool = False):
         self._record_trip_info = record_trip_info
         self._use_gui = use_gui
         self._data = None
+        self._configuration = configuration
 
     def run(self, duration=3600):
         if 'SUMO_HOME' in os.environ:
@@ -21,9 +24,11 @@ class Simulation:
         else:
             sys.exit("Please declare the environment variable 'SUMO_HOME'")
 
-        netfile = os.path.join(os.getcwd(), '../nets/single_intersection/exp.net.xml')
-        routefile = os.path.join(os.getcwd(), '../nets/single_intersection/stat.gen.rou.xml')
-        sumocfg = os.path.join(os.getcwd(), '../nets/single_intersection/exp.sumocfg')
+        if self._configuration:
+            sumocfg = str(self._configuration.sumo_config_file.name)
+
+        else:
+            sumocfg = os.path.join(os.getcwd(), '../nets/single_intersection/exp.sumocfg')
 
         if self._use_gui:
             sumo_binary = checkBinary('sumo-gui')
