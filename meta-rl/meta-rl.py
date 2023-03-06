@@ -4,7 +4,6 @@ import os
 import Simulation
 import SumoConfiguration
 from plots import plots
-from util.formulas import jains_fairness_index
 
 
 def main():
@@ -18,9 +17,14 @@ def main():
     # configuration = Configuration.Configuration()
     # print(configuration.generate_config_file())
 
-    plots.plot_arrival_vs_fairness_chart(simulation)
-    # plots.plot_fairness_over_time(simulation)
+    # plots.plot_arrival_vs_fairness_chart(simulation)
+    plots.plot_fairness_over_time(simulation)
+
+
+def plot():
+    plots.plot_cumulative_fairness_over_time_all_agents()
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    plot()

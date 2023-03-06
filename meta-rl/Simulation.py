@@ -56,6 +56,8 @@ class Simulation:
             traci.simulationStep()
             step += 1
             print('step:', step)
+            if step == 1000:
+                pass
         traci.close()
 
         if self._record_trip_info:

@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy
+import numpy as np
 
 from util.formulas import jains_fairness_index
 
@@ -82,5 +84,53 @@ def plot_fairness_over_time(simulation):
     ax2.tick_params(axis='y', labelcolor='tab:red')
 
     fig.suptitle('Static agent: cumulative arrivals / fairness comparison')
+    fig.tight_layout()
+    plt.show()
+
+    print(fairness_over_time)
+    numpy.savetxt('fairness_over_time_static.out', numpy.array(fairness_over_time))
+    print(numpy.loadtxt('fairness_over_time_static.out'))
+
+
+def plot_fairness_over_time_all_agents():
+    static_agent_data = numpy.loadtxt('fairness_over_time_static.out')
+    queue_length_agent_data = numpy.loadtxt('fairness_over_time_queue.out')
+    delay_based_agent_data = numpy.loadtxt('fairness_over_time_delay.out')
+
+    fig, ax = plt.subplots()
+    ax.set_xlabel(f'time (in simulation steps)')
+    ax.set_ylabel('jains fairness index')
+
+    ax.plot(static_agent_data, color='tab:grey', alpha=0.75)
+    ax.plot(queue_length_agent_data, color='b', alpha=0.75)
+    ax.plot(delay_based_agent_data, color='r', alpha=0.75)
+
+    ax.legend(["static", "queue based", "delay based"], loc='lower right')
+
+    fig.suptitle('Fairness over time')
+    fig.tight_layout()
+    plt.show()
+
+
+def plot_cumulative_fairness_over_time_all_agents():
+    static_agent_data = numpy.loadtxt('fairness_over_time_static.out')
+    queue_length_agent_data = numpy.loadtxt('fairness_over_time_queue.out')
+    delay_based_agent_data = numpy.loadtxt('fairness_over_time_delay.out')
+
+    static_agent_data = np.cumsum(static_agent_data)
+    queue_length_agent_data = np.cumsum(queue_length_agent_data)
+    delay_based_agent_data = np.cumsum(delay_based_agent_data)
+
+    fig, ax = plt.subplots()
+    ax.set_xlabel(f'time (in simulation steps)')
+    ax.set_ylabel('cumulative jains fairness index')
+
+    ax.plot(static_agent_data, color='tab:grey', alpha=0.75)
+    ax.plot(queue_length_agent_data, color='b', alpha=0.75)
+    ax.plot(delay_based_agent_data, color='r', alpha=0.75)
+
+    ax.legend(["static", "queue based", "delay based"], loc='lower right')
+
+    fig.suptitle('Cumulative fairness over time')
     fig.tight_layout()
     plt.show()
